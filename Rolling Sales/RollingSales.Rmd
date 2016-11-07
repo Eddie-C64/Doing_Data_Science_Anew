@@ -1,0 +1,55 @@
+---
+title: "Rolling Sales"
+author: "Eduardo Carrasco"
+date: "September 29, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Set WD and Load Packages}
+setwd("/Users/lalo/CodingComplication/DataScienceProjects/Doing_Data_Science/RollingSales/")
+library(plyr)
+install.packages('gdata')
+```
+
+
+```{r Read Data}
+require(gdata)
+bk = read.xls('rollingsales_brooklyn.xls',pattern="BOROUGH")
+head(bk)
+
+bk$SALE.PRICE = as.numeric(gsub("[^[:digit:]]","", bk$SALE.PRICE))
+
+count(is.na(bk$SALE.PRICE))
+
+names(bk) = tolower(names(bk))
+
+
+```
+
+```{r Clean and Format}
+# Clean and Format the data into the correct format.
+bk$gross.sqft = as.numeric(gsub("[^[:digit:]]", "", bk$gross.square.feet)) 
+bk$land.sqft = as.numeric(gsub("[^[:digit:]]", "", bk$land.square.feet)) 
+
+bk$sale.date = as.Date(bk$sale.date)
+bk$year.built = as.numeric(as.character(bk$year.built))
+
+```
+
+```{r EDA}
+attach(bk)
+
+hist(x=bk$sale.price)
+hist(x=bk$sale.price.n[bk$sale.price.n>0])
+hist(x=bk$gross.sqft[bk$sale.price.n==0])
+
+detach(bk)
+
+# Keep the useful data
+bk.sale = bk[bk$sale.price.n != 0, ]
+plot(bk$gross.sqft, bk.sale$sale.price.n)
+```
