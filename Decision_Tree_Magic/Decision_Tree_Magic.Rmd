@@ -1,0 +1,89 @@
+---
+title: "Decision_Tree_Magic"
+author: "Eduardo Carrasco"
+date: "3/20/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+cat("\014")
+setwd("/Users/lalo/CodingComplication/DataScienceProjects/Doing_Data_Science/Decision_Tree_Magic")
+library(rpart)
+require(ggplot2)
+data(diamonds)
+head(diamonds)
+```
+
+```{r Set Up}
+cat("\014")
+# plot a histogram with a line marking $12,00
+ggplot(diamonds) + geom_histogram(aes(x=price)) + geom_vline(xintercept = 12000)
+
+# build a True/False variable indicating if the price is above our threshold
+diamonds$Expensive <- ifelse(diamonds$price >= 12000, 1,0)
+head(diamonds)
+
+# Clean data and get rid of null
+diamonds$price <- NULL
+
+#glmnet
+require(glmnet)
+```
+
+```{r Prediction Matrix}
+cat("\014")
+# Building a predictor matrix we are leaving out the last columnn which is our response.
+x <- model.matrix(~., diamonds[, -ncol(diamonds)])
+
+y <- as.matrix(diamonds$Expensive)
+
+system.time(modGlmnet <- glmnet(x  = x, y = y, family = "binomial"))
+plot(modGlmnet, label=TRUE)
+```
+
+```{r Bulding the Tree}
+set.seed(48872)
+sample(1:10)
+
+# Decision Tree
+require(rpart)
+# Fire a simple decision tree
+modTree = rpart(Expensive ~ ., data = diamonds)
+plot(modTree)
+text(modTree)
+```
+
+```{r Bagging, Boosting, and Random Forest loading}
+cat("\014")
+require(boot)
+require(adabag)
+require(mboost)
+require(randomForest)
+
+```
+
+```{r Applying Bagging, Boosting, and Random Forest}
+cat("\014")
+mean(diamonds$carat)
+sd(diamonds$carat)
+
+boot.mean <- function(x, i){
+  mean(x[i])
+}
+
+# Allow us to find the variability of the mean
+boot(data=diamonds$carat, statistic = boot.mean, R=120)
+
+
+
+modBag = bagging(formula = Species ~., iris, mfinal=10)
+
+# Boosting
+system.time(modlglmBoost <- glmboost(as.factor(Expensive) ~ ., data = diamonds, family=Binomial(link="logit")))
+summary(modlglmBoost)
+?blackboost
+
+# Random Forest
+system.time(modForest = randomForest(Species ~., data=iris, importance = TRUE, proximity=TRUE))
+summary(modForest)
+```
